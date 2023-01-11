@@ -111,7 +111,7 @@ async def get_pic(link, page_link, headers, section=None, allow_special_page=Fal
                     w = 2000
             if find_diff is None:
                 infoboxes = ['notaninfobox', 'portable-infobox', 'infobox', 'tpl-infobox', 'infoboxtable',
-                             'infotemplatebox', 'skin-infobox', 'arcaeabox']
+                             'infotemplatebox', 'skin-infobox', 'arcaeabox', 'moe-infobox']
                 find_infobox = None
                 for i in infoboxes:
                     find_infobox = soup.find(class_=i)
@@ -210,6 +210,9 @@ async def get_pic(link, page_link, headers, section=None, allow_special_page=Fal
 
                 if b.name == selected_hx:
                     break
+                if b.name in hx:
+                    if hx.index(selected_hx) >= hx.index(b.name):
+                        break
                 if b not in bl:
                     bl.append(str(b))
             open_file.write(''.join(bl))

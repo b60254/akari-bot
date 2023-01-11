@@ -1,4 +1,6 @@
 import asyncio
+import re
+import traceback
 
 from core.builtins.message import MessageSession
 from core.component import on_command
@@ -15,10 +17,37 @@ async def main(msg: MessageSession):
     if enabled_addon is None:
         enabled_addon = True
     gather_list = []
+    matchObj = re.match(r'(.*)[\s:](.*)', msg.parsed_msg["<ServerIP:Port>"], re.M | re.I)
+    server_address = msg.parsed_msg["<ServerIP:Port>"]
+    if matchObj:
+        server_address = matchObj.group(1)
+
+    matchserip = re.match(r'(.*?)\.(.*?)\.(.*?)\.(.*?)', server_address)
+    if matchserip:
+        try:
+            is_local_ip = False
+            if matchserip.group(1) == '192':
+                if matchserip.group(2) == '168':
+                    is_local_ip = True
+            if matchserip.group(1) == '172':
+                if 16 <= int(matchserip.group(2)) <= 31:
+                    is_local_ip = True
+            if matchserip.group(1) == '10':
+                if 0 <= int(matchserip.group(2)) <= 255:
+                    is_local_ip = True
+            if matchserip.group(1) == '0':
+                if matchserip.group(2) == '0':
+                    if matchserip.group(3) == '0':
+                        is_local_ip = True
+            if is_local_ip:
+                return await msg.sendMessage('你最好有事')
+        except:
+            traceback.print_exc()
     sm = ['j', 'b']
     for x in sm:
         gather_list.append(asyncio.ensure_future(s(
-            msg, f'{msg.parsed_msg["<ServerIP:Port>"]}', msg.parsed_msg.get('-r', False), msg.parsed_msg.get('-p', False), x,
+            msg, f'{msg.parsed_msg["<ServerIP:Port>"]}', msg.parsed_msg.get('-r', False), msg.parsed_msg.get('-p', False
+                                                                                                             ), x,
             enabled_addon)))
     g = await asyncio.gather(*gather_list)
     if g == ['', '']:
@@ -32,13 +61,13 @@ async def main(msg: MessageSession):
             await msg.finish()
 
 
-@s.handle('revoke (enable|disable) {是否启用自动撤回功能（默认为是）。}')
+@s.handle('revoke <enable|disable> {是否启用自动撤回功能（默认为是）。}')
 async def revoke(msg: MessageSession):
-    if msg.parsed_msg['enable']:
+    if msg.parsed_msg.get('<enable|disable>') == 'enable':
         msg.data.edit_option('server_revoke', True)
         await msg.finish('已启用自动撤回功能。')
-    else:
-        msg.data.edit_option(msg).edit('server_revoke', False)
+    elif msg.parsed_msg.get('<enable|disable>') == 'disable':
+        msg.data.edit_option('server_revoke', False)
         await msg.finish('已禁用自动撤回功能。')
 
 
